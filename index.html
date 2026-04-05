@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPA Typing Keyboard</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --paper: #faf7f2;
+  --ink: #1a1612;
+  --muted: #7a6e62;
+  --border: #ccc4b4;
+  --key-bg: #ffffff;
+  --key-shadow: #c8bfb0;
+  --accent: #8b3a3a;
+  --accent2: #2a5c8b;
+  --accent3: #3a7a3a;
+  --accent4: #7a5c2a;
+  --accent5: #8a4f7d;
+  --accent6: #2f6f66;
+  --key-active: #8b3a3a;
+  --modifier-on: #8b3a3a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'EB Garamond', serif;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23b8a898' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+header p {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* OUTPUT */
+.output-wrap {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.6rem;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.06);
+}
+
+#ipa-out {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.6rem;
+  min-height: 2.4rem;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  word-break: break-all;
+  outline: none;
+  caret-color: var(--accent);
+}
+
+#ipa-out:empty::before {
+  content: 'Type on the keyboard below or click the keys…';
+  color: var(--muted);
+  font-size: 1rem;
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+}
+
+.output-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.btn {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.88rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.btn-copy { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.btn-copy:hover { background: #a04040; }
+.btn-copy.ok { background: var(--accent3); border-color: var(--accent3); }
+.btn-clear { background: transparent; color: var(--muted); }
+.btn-clear:hover { border-color: var(--muted); color: var(--ink); }
+.btn-bs { background: transparent; color: var(--muted); margin-left: auto; }
+.btn-bs:hover { border-color: var(--accent); color: var(--accent); }
+
+/* LAYER INDICATOR */
+.layer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.layer-label {
+  font-style: italic;
+}
+
+.layer-badge {
+  background: var(--accent);
+  color: #fff;
+  padding: 0.15rem 0.6rem;
+  border-radius: 3px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+/* MODIFIER BUTTONS */
+.mod-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mod-btn {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.85rem;
+  padding: 0.35rem 1rem;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+  background: var(--paper);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+.mod-btn:hover { border-color: var(--accent); color: var(--accent); }
+.mod-btn.active { background: var(--modifier-on); color: #fff; border-color: var(--modifier-on); }
+
+.mod-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+/* KEYBOARD */
+.keyboard {
+  user-select: none;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.kb-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.key {
+  position: relative;
+  background: var(--key-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  box-shadow: 0 2px 0 var(--key-shadow);
+  transition: transform 0.08s, box-shadow 0.08s;
+  overflow: visible;
+  min-width: 62px;
+  height: 62px;
+  margin-bottom: 0.9rem;
+}
+
+.key:hover { border-color: var(--accent); }
+.key:active, .key.pressed {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--key-shadow);
+  border-color: var(--accent);
+  background: #fff8f5;
+}
+
+.key.phys-pressed {
+  border-color: var(--accent);
+  background: #fff1eb;
+  box-shadow: 0 0 0 2px rgba(139,58,58,0.2), 0 0 18px rgba(139,58,58,0.22);
+}
+
+/* Key quadrants */
+.key-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  gap: 1px;
+}
+
+.kc { /* key character slot */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  border-radius: 2px;
+  line-height: 1.05;
+  color: var(--ink);
+  background: transparent;
+  position: relative;
+  padding: 0.2rem 0.15rem;
+}
+
+.kc.base      { font-size: 0.9rem; background: rgba(26,22,18,0.08); }
+.kc.shift     { font-size: 0.8rem; background: rgba(42,92,139,0.16); }
+.kc.ctrl      { font-size: 0.8rem; background: rgba(138,79,125,0.16); }
+.kc.alt       { font-size: 0.8rem; background: rgba(58,122,58,0.16); }
+.kc.altshift  { font-size: 0.76rem; background: rgba(122,92,42,0.16); }
+.kc.ctrlshift { font-size: 0.76rem; background: rgba(47,111,102,0.16); }
+.kc.active    { box-shadow: inset 0 0 0 2px rgba(139,58,58,0.38); }
+
+.kc-ipa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1em;
+}
+
+.key-real {
+  position: absolute;
+  left: 50%;
+  bottom: -1rem;
+  transform: translateX(-50%);
+  font-family: 'EB Garamond', serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.key.wide   { min-width: 92px; }
+.key.wider  { min-width: 110px; }
+.key.widest { min-width: 200px; }
+
+/* Special function keys */
+.key.fn {
+  background: #f0ece4;
+  min-width: 62px;
+}
+.key.fn .kc {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.leg { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+.leg-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--key-bg);
+  position: relative;
+}
+.leg-swatch::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.16;
+}
+.leg-base { color: var(--ink); }
+.leg-shift { color: var(--accent2); }
+.leg-ctrl { color: var(--accent5); }
+.leg-alt { color: var(--accent3); }
+.leg-altshift { color: var(--accent4); }
+.leg-ctrlshift { color: var(--accent6); }
+/* Reference table */
+.ref-toggle {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+.ref-toggle button {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.9rem;
+  padding: 0.4rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--muted);
+  cursor: pointer;
+  font-style: italic;
+  transition: all 0.15s;
+}
+.ref-toggle button:hover { border-color: var(--accent); color: var(--accent); }
+
+.ref-table-wrap {
+  display: none;
+  margin-top: 1rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  overflow-x: auto;
+}
+.ref-table-wrap.open { display: block; }
+
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+.ref-table th {
+  font-family: 'EB Garamond', serif;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.4rem 0.7rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.ref-table td {
+  padding: 0.3rem 0.7rem;
+  border-bottom: 1px solid #e8e0d4;
+  vertical-align: middle;
+}
+.ref-table tr:last-child td { border-bottom: none; }
+.ref-table .sym { font-family: 'Fira Code', monospace; font-size: 1.1rem; }
+.ref-table .keystroke {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  background: #f0ece4;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ref-table .cat-vowel { border-left: 3px solid var(--accent2); }
+.ref-table .cat-consonant { border-left: 3px solid var(--accent); }
+.ref-table .cat-diacritic { border-left: 3px solid var(--accent4); }
+.ref-table .cat-supraseg { border-left: 3px solid var(--accent3); }
+
+.ref-section-head td {
+  background: #f0ece4;
+  font-family: 'EB Garamond', serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0.5rem 0.7rem 0.3rem;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<header>
+  <h1>IPA Typing Keyboard</h1>
+  <p>A standard keyboard layout mapped to IPA — type physically or click the keys</p>
+</header>
+
+<div class="output-wrap">
+  <div id="ipa-out" contenteditable="false"></div>
+</div>
+
+<div class="output-controls">
+  <button class="btn btn-copy" id="copyBtn" onclick="copyText()">Copy to Clipboard</button>
+  <button class="btn btn-clear" onclick="clearAll()">Clear</button>
+  <button class="btn btn-bs" onclick="doBackspace()">⌫ Delete</button>
+</div>
+
+<div class="layer-bar">
+  <span class="layer-label">Active layer:</span>
+  <span class="layer-badge" id="layerBadge">Base</span>
+  <span style="margin-left:0.5rem; font-size:0.78rem; color:var(--muted); font-style:italic;">
+    — physical Shift / Option / Control keys also work
+  </span>
+</div>
+
+<div class="mod-row">
+  <button class="mod-btn" id="mod-shift" onclick="toggleMod('shift')">⇧ Shift</button>
+  <button class="mod-btn" id="mod-alt" onclick="toggleMod('alt')">⌥ Option</button>
+  <button class="mod-btn" id="mod-ctrl" onclick="toggleMod('ctrl')">⌃ Control</button>
+  <span class="mod-hint">Click to lock modifiers, or hold the physical keys</span>
+</div>
+
+<div class="keyboard" id="keyboard"></div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-swatch leg-ctrlshift"></div> Shift + Control — top left</div>
+  <div class="leg"><div class="leg-swatch leg-shift"></div> Shift — top center</div>
+  <div class="leg"><div class="leg-swatch leg-altshift"></div> Shift + Option — top right</div>
+  <div class="leg"><div class="leg-swatch leg-ctrl"></div> Control — bottom left</div>
+  <div class="leg"><div class="leg-swatch leg-base"></div> Base — bottom center</div>
+  <div class="leg"><div class="leg-swatch leg-alt"></div> Option — bottom right</div>
+</div>
+
+<div class="ref-toggle">
+  <button onclick="toggleRef()">▾ Show Full Keystroke Reference</button>
+</div>
+<div class="ref-table-wrap" id="refTable"></div>
+</div><!-- /container -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+//  MAPPING
+//  Preferred 6-slot form:
+//  [ base, shift, option, shift+option, control, shift+control ]
+//  Internally these map to modifier masks 0, 1, 2, 3, 4, 5.
+//  Legacy 4-slot rows [ base, shift, option, shift+option ] still work.
+//  null = key produces nothing in that layer
+// ─────────────────────────────────────────────────────────────────
+
+const MAP = {
+  // Number row — prosody, diacritics, and tie bars
+  '`': ['ʔ', 'ʕ', 'ʡ', 'ʢ', 'ʜ', null],
+  '1': ['ˈ', 'ˌ', '|', '‖', '↑', '↓'],
+  '2': ['.', '‿', '͡', '͜', '̩', '̯'],
+  '3': ['ː', 'ˑ', '̆', '̚', 'ⁿ', 'ˡ'],
+  '4': ['ʰ', 'ʷ', 'ʲ', 'ˠ', 'ˤ', '˞'],
+  '5': ['̥', '̬', '̤', '̰', '̃', '̴'],
+  '6': ['̪', '̼', '̺', '̻', '̹', '̜'],
+  '7': ['̟', '̠', '̈', '̽', '̝', '̞'],
+  '8': ['˥', '˦', '˧', '˨', '˩', '˥˩'],
+  '9': ['˩˥', '̋', '́', '̄', '̀', '̌'],
+  '0': ['̂', '̏', '↗', '↘', null, null],
+  '-': ['/', '[', ']', '{', '⟨', '⟩'],
+  '=': ['ʼ', '"', null, null, null, null],
+
+  // Top row — high vowels, rhotics, and labials
+  'q': ['q', 'ʔ', 'ʡ', 'ʢ', null, null],
+  'w': ['w', 'ʍ', 'ɰ', 'ʟ', null, null],
+  'e': ['e', 'ɛ', 'ə', 'ɘ', 'ø', 'œ'],
+  'r': ['r', 'ɾ', 'ɹ', 'ɻ', 'ɺ', 'ʀ'],
+  't': ['t', 'θ', 'ʈ', 'tʼ', 'c', 'ɗ'],
+  'y': ['y', 'ʏ', 'ɨ', 'ʉ', 'ɥ', null],
+  'u': ['u', 'ʊ', 'ɯ', 'ʌ', 'ɤ', 'ɯ'],
+  'i': ['i', 'ɪ', 'ɨ', 'ʉ', null, null],
+  'o': ['o', 'ɔ', 'ɵ', 'ɤ', 'ɞ', 'ʌ'],
+  'p': ['p', 'ɸ', 'pʼ', 'ʘ', 'ɓ', 'ʙ'],
+  '[': ['[', '{', '⟨', null, null, null],
+  ']': [']', '}', '⟩', null, null, null],
+  '\\': ['|', '‖', '͡', '͜', '/', null],
+
+  // Home row — open vowels, coronals, dorsals
+  'a': ['a', 'æ', 'ɑ', 'ɶ', 'ɒ', 'ɐ'],
+  's': ['s', 'ʃ', 'ʂ', 'sʼ', 'ɕ', 'ʑ'],
+  'd': ['d', 'ð', 'ɖ', null, 'ɗ', null],
+  'f': ['f', 'ɸ', 'β', 'v', 'ⱱ', 'ʋ'],
+  'g': ['ɡ', 'ɣ', 'ɢ', 'ɠ', 'ʛ', null],
+  'h': ['h', 'ħ', 'ɦ', 'ʕ', 'ʜ', 'ʢ'],
+  'j': ['j', 'ʝ', 'ʎ', 'ɥ', 'ʄ', null],
+  'k': ['k', 'x', 'q', 'kʼ', 'c', 'ɟ'],
+  'l': ['l', 'ɬ', 'ɭ', 'ɮ', 'ɺ', 'ʟ'],
+  ';': ['n', 'ŋ', 'ɲ', 'ɱ', 'ɳ', 'ɴ'],
+  "'": ['ʼ', 'ʔ', 'ˀ', null, null, null],
+
+  // Bottom row — sibilants, uvulars, clicks, low/central vowels
+  'z': ['z', 'ʒ', 'ʐ', null, 'ɧ', null],
+  'x': ['x', 'χ', 'ʁ', 'ʀ', null, null],
+  'c': ['c', 'ç', 'ɕ', 'ǂ', 'ɟ', 'ʄ'],
+  'v': ['v', 'β', 'ʋ', 'ⱱ', null, null],
+  'b': ['b', 'ɓ', 'β', 'ʙ', null, null],
+  'n': ['n', 'ɳ', 'ɲ', 'ɴ', 'ŋ', 'ɱ'],
+  'm': ['m', 'ɱ', 'ɴ', 'ʙ', null, null],
+  ',': ['ǀ', 'ǃ', 'ǂ', 'ǁ', 'ʘ', null],
+  '.': ['ɐ', 'ä', 'ɒ', 'ɑ', 'ɜ', 'ɞ'],
+  '/': ['ɾ', 'ɽ', 'ɹ', 'ɻ', 'ɺ', 'ʀ'],
+
+  // Space
+  ' ': [' ', ' ', ' ', ' ', ' ', ' '],
+};
+
+// Additional diacritics accessible via special keys
+// We'll put them on keys not yet used
+
+// ─────────────────────────────────────────────────────────────────
+//  KEYBOARD LAYOUT (physical key names)
+// ─────────────────────────────────────────────────────────────────
+const ROWS = [
+  { keys: ['`','1','2','3','4','5','6','7','8','9','0','-','='], label: 'number row', indent: 0 },
+  { keys: ['q','w','e','r','t','y','u','i','o','p','[',']','\\'], label: 'top row', indent: 34 },
+  { keys: ['a','s','d','f','g','h','j','k','l',';',"'"], label: 'home row', indent: 46 },
+  { keys: ['z','x','c','v','b','n','m',',','.','/'], label: 'bottom row', indent: 74 },
+];
+
+// Human-readable names for reference table
+const NAMES = {
+  'ʔ':'Glottal stop','ʕ':'Voiced pharyngeal fric.','ʡ':'Epiglottal stop','ʢ':'Voiced epiglottal fric.',
+  'ˈ':'Primary stress','ˌ':'Secondary stress','|':'Minor group','‖':'Major group',
+  '.':'Syllable break','‿':'Linking','͡':'Tie bar above','͜':'Tie bar below','ː':'Long','ˑ':'Half-long','̆':'Extra-short','̚':'No audible release',
+  'ⁿ':'Nasal release','ˡ':'Lateral release',
+  '↓':'Downstep','↑':'Upstep','↗':'Global rise','↘':'Global fall',
+  '˥':'Extra high tone','˦':'High tone','˧':'Mid tone','˨':'Low tone','˩':'Extra low tone',
+  '˥˩':'Falling tone','˩˥':'Rising tone',
+  'ʰ':'Aspirated','ʷ':'Labialized','ʲ':'Palatalized','ˠ':'Velarized','ˤ':'Pharyngealized','˞':'Rhoticity',
+  '̥':'Voiceless','̬':'Voiced','̤':'Breathy voiced','̰':'Creaky voiced','̃':'Nasalized','̴':'Velarized or pharyngealized',
+  '̪':'Dental','̼':'Linguolabial','̺':'Apical','̻':'Laminal','̹':'More rounded','̜':'Less rounded',
+  '̟':'Advanced','̠':'Retracted','̈':'Centralized','̽':'Mid-centralized','̝':'Raised','̞':'Lowered',
+  'w':'Labial-velar approx.','ʍ':'Voiceless labial-velar fric.','ɰ':'Velar approx.','ʟ':'Velar lateral approx.',
+  'ɛ':'Open-mid front unrounded','e':'Close-mid front unrounded','ə':'Schwa','ɘ':'Close-mid central unrounded','ø':'Close-mid front rounded','œ':'Open-mid front rounded',
+  'r':'Alveolar trill','ɾ':'Alveolar flap','ɹ':'Alveolar approx.','ɻ':'Retroflex approx.','ɺ':'Alveolar lateral flap','ʀ':'Uvular trill','ɽ':'Retroflex flap',
+  't':'Voiceless alveolar stop','θ':'Voiceless dental fric.','ʈ':'Voiceless retroflex stop','ɗ':'Voiced dental/alveolar implosive',
+  'y':'Close front rounded','ʏ':'Near-close front rounded','ɨ':'Close central unrounded','ʉ':'Close central rounded','ɥ':'Labial-palatal approx.',
+  'u':'Close back rounded','ʊ':'Near-close back rounded','ɯ':'Close back unrounded','ʌ':'Open-mid back unrounded','ɶ':'Open front rounded',
+  'i':'Close front unrounded','ɪ':'Near-close front unrounded',
+  'ɔ':'Open-mid back rounded','o':'Close-mid back rounded','ɵ':'Close-mid central rounded','ɤ':'Close-mid back unrounded','ɞ':'Open-mid central rounded',
+  'p':'Voiceless bilabial stop','ɸ':'Voiceless bilabial fric.','ʘ':'Bilabial click','ɓ':'Voiced bilabial implosive',
+  'a':'Open front unrounded','æ':'Near-open front unrounded','ɑ':'Open back unrounded','ɒ':'Open back rounded','ɐ':'Near-open central',
+  's':'Voiceless alveolar fric.','ʃ':'Voiceless postalveolar fric.','ʂ':'Voiceless retroflex fric.','ɕ':'Voiceless alveolo-palatal fric.','ʑ':'Voiced alveolo-palatal fric.',
+  'd':'Voiced alveolar stop','ð':'Voiced dental fric.','ɖ':'Voiced retroflex stop',
+  'f':'Voiceless labiodental fric.','β':'Voiced bilabial fric.','v':'Voiced labiodental fric.','ʋ':'Labiodental approx.','ⱱ':'Labiodental flap',
+  'ɡ':'Voiced velar stop','ɣ':'Voiced velar fric.','ɢ':'Voiced uvular stop','ɠ':'Voiced velar implosive','ʛ':'Voiced uvular implosive',
+  'h':'Voiceless glottal fric.','ħ':'Voiceless pharyngeal fric.','ɦ':'Voiced glottal fric.','ʜ':'Voiceless epiglottal fric.',
+  'j':'Palatal approx.','ʝ':'Voiced palatal fric.','ʎ':'Palatal lateral approx.','ʄ':'Voiced palatal implosive',
+  'k':'Voiceless velar stop','x':'Voiceless velar fric.','q':'Voiceless uvular stop','c':'Voiceless palatal stop','ɟ':'Voiced palatal stop',
+  'l':'Alveolar lateral approx.','ɬ':'Voiceless alveolar lateral fric.','ɭ':'Retroflex lateral approx.','ɮ':'Voiced alveolar lateral fric.',
+  'ŋ':'Velar nasal','ɴ':'Uvular nasal','ɲ':'Palatal nasal','ɱ':'Labiodental nasal','ɳ':'Retroflex nasal',
+  'ʼ':'Ejective marker','ˀ':'Glottalization',
+  'z':'Voiced alveolar fric.','ʒ':'Voiced postalveolar fric.','ʐ':'Voiced retroflex fric.','ɧ':'Simultaneous ʃ and x',
+  'χ':'Voiceless uvular fric.','ʁ':'Voiced uvular fric.',
+  'ç':'Voiceless palatal fric.',
+  'b':'Voiced bilabial stop','ʙ':'Bilabial trill',
+  'n':'Alveolar nasal',
+  'm':'Bilabial nasal',
+  'ǀ':'Dental click','ǃ':'Postalveolar click','ǂ':'Palatal click','ǁ':'Alveolar lateral click',
+  'ɐ':'Near-open central','ä':'Open central unrounded','ɜ':'Open-mid central unrounded',
+  'tʼ':'Alveolar ejective','pʼ':'Bilabial ejective','kʼ':'Velar ejective','sʼ':'Alveolar ejective fric.',
+  '/':'Phonemic slash','[':'Phonetic bracket open',']':'Phonetic bracket close','{':'Brace open','}':'Brace close','⟨':'Angle bracket open','⟩':'Angle bracket close',
+};
+
+// Categories for color coding
+const CATS = {
+  vowel: ['ɛ','e','ə','ɘ','ø','œ','y','ʏ','ɨ','ʉ','u','ʊ','ɯ','ʌ','ɤ','i','ɪ','ɔ','o','ɵ','ɞ','a','æ','ɑ','ɶ','ɒ','ɐ','ä','ɜ'],
+  diacritic: ['͡','͜','ː','ˑ','̆','̚','ⁿ','ˡ','ʰ','ʷ','ʲ','ˠ','ˤ','˞','̥','̬','̤','̰','̃','̴','̪','̼','̺','̻','̹','̜','̟','̠','̈','̽','̝','̞','ʼ','ˀ'],
+  supraseg: ['ˈ','ˌ','|','‖','.','‿','↑','↓','↗','↘','˥','˦','˧','˨','˩','˥˩','˩˥','/','[',']','{','}','⟨','⟩'],
+};
+
+// ─────────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────────
+const MOD_BITS = { shift: 1, alt: 2, ctrl: 4 };
+const MOD_ORDER = ['shift', 'alt', 'ctrl'];
+const MOD_LABELS = {
+  shift: 'Shift',
+  alt: 'Option',
+  ctrl: 'Control',
+};
+const MOD_SHORT = { shift: 'S', alt: 'O', ctrl: 'C' };
+
+let lockedMods = { shift: false, alt: false, ctrl: false };
+let physMods = { shift: false, alt: false, ctrl: false };
+const pressedVirtKeys = new Set();
+
+function currentMask() {
+  return MOD_ORDER.reduce((mask, mod) => {
+    if (lockedMods[mod] || physMods[mod]) return mask | MOD_BITS[mod];
+    return mask;
+  }, 0);
+}
+
+function layerLabel(mask = currentMask()) {
+  const active = MOD_ORDER.filter(mod => mask & MOD_BITS[mod]).map(mod => MOD_LABELS[mod]);
+  return active.length ? active.join(' + ') : 'Base';
+}
+
+function layerShort(mask) {
+  const active = MOD_ORDER.filter(mod => mask & MOD_BITS[mod]).map(mod => MOD_SHORT[mod]);
+  return active.length ? active.join('+') : 'Base';
+}
+
+function normalizeSlots(slots) {
+  const normalized = new Array(8).fill(null);
+  if (!Array.isArray(slots)) return normalized;
+  if (slots.length <= 4) {
+    normalized[0] = slots[0] ?? null;
+    normalized[1] = slots[1] ?? null;
+    normalized[2] = slots[2] ?? null;
+    normalized[3] = slots[3] ?? null;
+    return normalized;
+  }
+  if (slots.length === 6) {
+    normalized[0] = slots[0] ?? null;
+    normalized[1] = slots[1] ?? null;
+    normalized[2] = slots[2] ?? null;
+    normalized[3] = slots[3] ?? null;
+    normalized[4] = slots[4] ?? null;
+    normalized[5] = slots[5] ?? null;
+    return normalized;
+  }
+  for (let i = 0; i < Math.min(8, slots.length); i++) {
+    normalized[i] = slots[i] ?? null;
+  }
+  return normalized;
+}
+
+function fallbackMasks(mask) {
+  const masks = [];
+  for (let candidate = mask; ; candidate = (candidate - 1) & mask) {
+    masks.push(candidate);
+    if (candidate === 0) break;
+  }
+  return masks.sort((a, b) => bitCount(b) - bitCount(a));
+}
+
+function bitCount(value) {
+  let count = 0;
+  let n = value;
+  while (n) {
+    count += n & 1;
+    n >>= 1;
+  }
+  return count;
+}
+
+function layerValue(slots, mask = currentMask()) {
+  const normalized = normalizeSlots(slots);
+  for (const candidate of fallbackMasks(mask)) {
+    if (normalized[candidate] != null) return { value: normalized[candidate], mask: candidate };
+  }
+  return { value: null, mask: 0 };
+}
+
+function exactLayerValue(slots, mask = currentMask()) {
+  const normalized = normalizeSlots(slots);
+  return { value: normalized[mask] ?? null, mask };
+}
+
+function updateLayerUI() {
+  document.getElementById('layerBadge').textContent = layerLabel();
+  MOD_ORDER.forEach(mod => {
+    document.getElementById('mod-' + mod).classList.toggle('active', lockedMods[mod]);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  OUTPUT
+// ─────────────────────────────────────────────────────────────────
+let text = '';
+
+function insertChar(ch) {
+  if (!ch) return;
+  text += ch;
+  renderOutput();
+}
+
+function renderOutput() {
+  const el = document.getElementById('ipa-out');
+  el.textContent = text;
+}
+
+function doBackspace() {
+  const arr = [...text];
+  arr.pop();
+  text = arr.join('');
+  renderOutput();
+}
+
+function clearAll() { text = ''; renderOutput(); }
+
+function copyText() {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById('copyBtn');
+    b.textContent = '✓ Copied!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = 'Copy to Clipboard'; b.classList.remove('ok'); }, 1800);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  MODIFIERS
+// ─────────────────────────────────────────────────────────────────
+function toggleMod(mod) {
+  lockedMods[mod] = !lockedMods[mod];
+  updateLayerUI();
+  buildKeyboard();
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  BUILD KEYBOARD
+// ─────────────────────────────────────────────────────────────────
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+
+  ROWS.forEach(row => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'kb-row';
+    rowDiv.style.marginLeft = `${row.indent || 0}px`;
+
+    row.keys.forEach(k => {
+      const slots = MAP[k] || [null, null, null, null];
+      const normalizedSlots = normalizeSlots(slots);
+      const keyEl = document.createElement('div');
+      keyEl.className = 'key';
+      keyEl.dataset.key = k;
+      if (pressedVirtKeys.has(k)) keyEl.classList.add('phys-pressed');
+      if (k === '\\' || k === "'" || k === ';') keyEl.classList.add('wide');
+
+      const grid = document.createElement('div');
+      grid.className = 'key-grid';
+
+      const activeMask = currentMask();
+      const activeResolved = activeMask <= 5 ? exactLayerValue(slots, activeMask) : layerValue(slots, activeMask);
+
+      // Layout:
+      // [ shift+control, shift, shift+option ]
+      // [ control, base, option ]
+      const positions = [
+        { cls: 'ctrlshift', val: normalizedSlots[5], mask: 5, short: 'S+C' },
+        { cls: 'shift',     val: normalizedSlots[1], mask: 1, short: 'S' },
+        { cls: 'altshift',  val: normalizedSlots[3], mask: 3, short: 'S+O' },
+        { cls: 'ctrl',      val: normalizedSlots[4], mask: 4, short: 'C' },
+        { cls: 'base',      val: normalizedSlots[0], mask: 0, short: 'B' },
+        { cls: 'alt',       val: normalizedSlots[2], mask: 2, short: 'O' },
+      ];
+
+      positions.forEach(pos => {
+        const cell = document.createElement('div');
+        cell.className = 'kc ' + pos.cls;
+        if (pos.mask === activeResolved.mask) cell.classList.add('active');
+        const ipa = document.createElement('div');
+        ipa.className = 'kc-ipa';
+        ipa.textContent = pos.val || '';
+        cell.appendChild(ipa);
+        cell.title = layerLabel(pos.mask);
+        grid.appendChild(cell);
+      });
+
+      keyEl.appendChild(grid);
+
+      const real = document.createElement('div');
+      real.className = 'key-real';
+      real.textContent = displayKeyLabel(k);
+      keyEl.appendChild(real);
+
+      // Click handler — use the current layer
+      keyEl.addEventListener('click', () => {
+        const active = currentMask() <= 5 ? exactLayerValue(slots) : layerValue(slots);
+        const ch = active.value;
+        if (ch) {
+          insertChar(ch);
+          // flash
+          keyEl.classList.add('pressed');
+          setTimeout(() => keyEl.classList.remove('pressed'), 120);
+          // reset locked mods after use (one-shot)
+          if (MOD_ORDER.some(mod => lockedMods[mod])) {
+            lockedMods = { shift: false, alt: false, ctrl: false };
+            updateLayerUI();
+            buildKeyboard();
+          }
+        }
+      });
+
+      rowDiv.appendChild(keyEl);
+    });
+
+    // Add special function keys
+    if (row.label === 'bottom row') {
+      const sp = makeFnKey('SPACE', () => insertChar(' '), 'widest', ' ');
+      rowDiv.appendChild(sp);
+    }
+    if (row.label === 'top row') {
+      const bs = makeFnKey('⌫', doBackspace, 'wide', '__backspace__');
+      rowDiv.appendChild(bs);
+    }
+
+    kb.appendChild(rowDiv);
+  });
+}
+
+function makeFnKey(label, fn, cls, dataKey) {
+  const el = document.createElement('div');
+  el.className = 'key fn ' + (cls||'');
+  if (dataKey) {
+    el.dataset.key = dataKey;
+    if (pressedVirtKeys.has(dataKey)) el.classList.add('phys-pressed');
+  }
+  const grid = document.createElement('div');
+  grid.className = 'key-grid';
+  const cell = document.createElement('div');
+  cell.className = 'kc base';
+  cell.style.gridColumn = '1 / -1';
+  cell.style.gridRow = '1 / -1';
+  cell.style.fontSize = '0.75rem';
+  cell.textContent = label;
+  grid.appendChild(cell);
+  el.appendChild(grid);
+  el.addEventListener('click', fn);
+  return el;
+}
+
+function setVirtualKeyPressed(key, isPressed) {
+  if (!key) return;
+  if (isPressed) pressedVirtKeys.add(key);
+  else pressedVirtKeys.delete(key);
+
+  const el = document.querySelector(`.key[data-key="${CSS.escape(key)}"]`);
+  if (el) el.classList.toggle('phys-pressed', isPressed);
+}
+
+function displayKeyLabel(key) {
+  const labels = {
+    '`': '`',
+    '-': '-',
+    '=': '=',
+    '[': '[',
+    ']': ']',
+    '\\': '\\',
+    ';': ';',
+    "'": "'",
+    ',': ',',
+    '.': '.',
+    '/': '/',
+    ' ': 'SPACE',
+  };
+  return labels[key] || key.toUpperCase();
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  PHYSICAL KEYBOARD HANDLER
+// ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Shift') { physMods.shift = true; updateLayerUI(); buildKeyboard(); return; }
+  if (e.key === 'Alt') { physMods.alt = true; updateLayerUI(); buildKeyboard(); e.preventDefault(); return; }
+  if (e.key === 'Control') { physMods.ctrl = true; updateLayerUI(); buildKeyboard(); return; }
+  if (e.key === 'Backspace') { setVirtualKeyPressed('__backspace__', true); doBackspace(); e.preventDefault(); return; }
+  if (e.key === 'Escape') { clearAll(); return; }
+
+  // Map physical key to our key id
+  const physKey = getPhysKey(e);
+  const slots = MAP[physKey];
+  if (!slots) return;
+  setVirtualKeyPressed(physKey, true);
+
+  const active = currentMask() <= 5 ? exactLayerValue(slots) : layerValue(slots);
+  const ch = active.value;
+  if (ch) { e.preventDefault(); insertChar(ch); }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === 'Shift') { physMods.shift = false; updateLayerUI(); buildKeyboard(); }
+  if (e.key === 'Alt') { physMods.alt = false; updateLayerUI(); buildKeyboard(); }
+  if (e.key === 'Control') { physMods.ctrl = false; updateLayerUI(); buildKeyboard(); }
+  if (e.key === 'Backspace') { setVirtualKeyPressed('__backspace__', false); return; }
+  setVirtualKeyPressed(getPhysKey(e), false);
+});
+
+function getPhysKey(e) {
+  // e.code gives physical key: KeyA, Digit1, etc.
+  const code = e.code;
+  if (code.startsWith('Key')) return code.slice(3).toLowerCase();
+  if (code.startsWith('Digit')) return code.slice(5);
+  const map = {
+    'Backquote':'`','Minus':'-','Equal':'=','BracketLeft':'[',
+    'BracketRight':']','Backslash':'\\','Semicolon':';','Quote':"'",
+    'Comma':',','Period':'.','Slash':'/','Space':' ',
+  };
+  return map[code] || null;
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  REFERENCE TABLE
+// ─────────────────────────────────────────────────────────────────
+function toggleRef() {
+  const wrap = document.getElementById('refTable');
+  wrap.classList.toggle('open');
+  if (wrap.classList.contains('open') && !wrap.innerHTML.trim()) buildRefTable();
+}
+
+function keystrokeLabel(k, mask) {
+  // Display key nicely
+  const display = {
+    '`':'`', '\\':'\\', ';':';', "'":`'`, ',':',', '.':'.', '/':'/', ' ':'Space',
+    '-':'-', '=':'='
+  };
+  const kd = display[k] || k.toUpperCase();
+  return (mask ? layerLabel(mask) + ' + ' : '') + kd;
+}
+
+function buildRefTable() {
+  const wrap = document.getElementById('refTable');
+  let html = '<table class="ref-table"><thead><tr><th>Symbol</th><th>Keystroke</th><th>Name</th></tr></thead><tbody>';
+
+  const sections = [
+    { title: 'Vowels', cat: 'vowel' },
+    { title: 'Consonants', cat: 'consonant' },
+    { title: 'Diacritics & Length', cat: 'diacritic' },
+    { title: 'Suprasegmentals & Brackets', cat: 'supraseg' },
+  ];
+
+  // Collect all symbol→keystroke pairs
+  const collected = {}; // sym → { keystroke, name }
+  Object.entries(MAP).forEach(([k, slots]) => {
+    normalizeSlots(slots).forEach((sym, idx) => {
+      if (!sym || sym === ' ' || sym === '[' || sym === ']' || sym === '/') {
+        if (sym === '/' || sym === '[' || sym === ']') {
+          // keep
+        } else return;
+      }
+      if (!collected[sym]) {
+        collected[sym] = { keystroke: keystrokeLabel(k, idx), name: NAMES[sym] || '' };
+      }
+    });
+  });
+
+  const getCat = sym => {
+    if (CATS.vowel.includes(sym)) return 'vowel';
+    if (CATS.diacritic.includes(sym)) return 'diacritic';
+    if (CATS.supraseg.includes(sym)) return 'supraseg';
+    return 'consonant';
+  };
+
+  // Group
+  const grouped = { vowel:[], consonant:[], diacritic:[], supraseg:[] };
+  Object.entries(collected).forEach(([sym, info]) => {
+    grouped[getCat(sym)].push({ sym, ...info });
+  });
+
+  sections.forEach(sec => {
+    html += `<tr class="ref-section-head"><td colspan="3">${sec.title}</td></tr>`;
+    grouped[sec.cat].forEach(item => {
+      html += `<tr class="cat-${sec.cat}">
+        <td class="sym">${item.sym}</td>
+        <td><span class="keystroke">${item.keystroke}</span></td>
+        <td>${item.name}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────────
+buildKeyboard();
+updateLayerUI();
+</script>
+</body>
+</html>
