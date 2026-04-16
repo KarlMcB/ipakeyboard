@@ -112,6 +112,24 @@ header p {
 .btn-clear:hover { border-color: var(--muted); color: var(--ink); }
 .btn-bs { background: transparent; color: var(--muted); margin-left: auto; }
 .btn-bs:hover { border-color: var(--accent); color: var(--accent); }
+.last-char-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.last-char-name .last-char-sym {
+  font-family: 'Fira Code', monospace;
+  font-style: normal;
+  font-size: 1rem;
+  color: var(--ink);
+}
 
 /* LAYER INDICATOR */
 .layer-bar {
@@ -413,6 +431,7 @@ header p {
 <div class="output-controls">
   <button class="btn btn-copy" id="copyBtn" onclick="copyText()">Copy to Clipboard</button>
   <button class="btn btn-clear" onclick="clearAll()">Clear</button>
+  <span class="last-char-name" id="lastCharName"></span>
   <button class="btn btn-bs" onclick="doBackspace()">⌫ Delete</button>
 </div>
 
@@ -684,11 +703,26 @@ function updateLayerUI() {
 //  OUTPUT
 // ─────────────────────────────────────────────────────────────────
 let text = '';
+let lastChar = '';
+
+function updateLastCharName() {
+  const el = document.getElementById('lastCharName');
+  const name = lastChar ? NAMES[lastChar] : '';
+  if (lastChar && name) {
+    el.innerHTML = `<span class="last-char-sym">${lastChar}</span>${name}`;
+  } else if (lastChar) {
+    el.innerHTML = `<span class="last-char-sym">${lastChar}</span>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
 
 function insertChar(ch) {
   if (!ch) return;
   text += ch;
+  lastChar = ch;
   renderOutput();
+  updateLastCharName();
 }
 
 function renderOutput() {
@@ -700,10 +734,12 @@ function doBackspace() {
   const arr = [...text];
   arr.pop();
   text = arr.join('');
+  lastChar = arr.length ? arr[arr.length - 1] : '';
   renderOutput();
+  updateLastCharName();
 }
 
-function clearAll() { text = ''; renderOutput(); }
+function clearAll() { text = ''; lastChar = ''; renderOutput(); updateLastCharName(); }
 
 function copyText() {
   if (!text) return;
