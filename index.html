@@ -115,20 +115,31 @@ header p {
 .last-char-name {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
+  gap: 0.6rem;
+  font-size: 1rem;
   color: var(--muted);
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 280px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.85rem;
+  min-width: 180px;
+  min-height: 2.1rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  transition: border-color 0.15s;
+}
+.last-char-name.hover-active {
+  border-color: var(--accent);
+  color: var(--ink);
 }
 .last-char-name .last-char-sym {
   font-family: 'Fira Code', monospace;
   font-style: normal;
-  font-size: 1rem;
-  color: var(--ink);
+  font-size: 1.15rem;
+  color: var(--accent);
 }
 
 /* LAYER INDICATOR */
@@ -266,6 +277,8 @@ header p {
 .kc.altshift  { font-size: 0.76rem; background: rgba(122,92,42,0.16); }
 .kc.ctrlshift { font-size: 0.76rem; background: rgba(47,111,102,0.16); }
 .kc.active    { box-shadow: inset 0 0 0 2px rgba(139,58,58,0.38); }
+.kc.has-value { cursor: pointer; }
+.kc.has-value:hover { box-shadow: inset 0 0 0 2px rgba(139,58,58,0.55); background-color: rgba(139,58,58,0.1) !important; }
 
 .kc-ipa {
   display: flex;
@@ -705,13 +718,16 @@ function updateLayerUI() {
 let text = '';
 let lastChar = '';
 
-function updateLastCharName() {
+function updateLastCharName(overrideSym) {
   const el = document.getElementById('lastCharName');
-  const name = lastChar ? NAMES[lastChar] : '';
-  if (lastChar && name) {
-    el.innerHTML = `<span class="last-char-sym">${lastChar}</span>${name}`;
-  } else if (lastChar) {
-    el.innerHTML = `<span class="last-char-sym">${lastChar}</span>`;
+  const sym = overrideSym !== undefined ? overrideSym : lastChar;
+  const name = sym ? NAMES[sym] : '';
+  const isOverride = overrideSym !== undefined;
+  el.classList.toggle('hover-active', isOverride && !!sym);
+  if (sym && name) {
+    el.innerHTML = `<span class="last-char-sym">${sym}</span>${name}`;
+  } else if (sym) {
+    el.innerHTML = `<span class="last-char-sym">${sym}</span>`;
   } else {
     el.innerHTML = '';
   }
@@ -807,6 +823,24 @@ function buildKeyboard() {
         ipa.textContent = pos.val || '';
         cell.appendChild(ipa);
         cell.title = layerLabel(pos.mask);
+        if (pos.val) {
+          cell.classList.add('has-value');
+          cell.addEventListener('mouseenter', () => updateLastCharName(pos.val));
+          cell.addEventListener('mouseleave', () => updateLastCharName());
+          cell.addEventListener('click', e => {
+            e.stopPropagation();
+            insertChar(pos.val);
+            // flash the key
+            keyEl.classList.add('pressed');
+            setTimeout(() => keyEl.classList.remove('pressed'), 120);
+            // reset locked mods after use (one-shot)
+            if (MOD_ORDER.some(mod => lockedMods[mod])) {
+              lockedMods = { shift: false, alt: false, ctrl: false };
+              updateLayerUI();
+              buildKeyboard();
+            }
+          });
+        }
         grid.appendChild(cell);
       });
 
@@ -816,24 +850,6 @@ function buildKeyboard() {
       real.className = 'key-real';
       real.textContent = displayKeyLabel(k);
       keyEl.appendChild(real);
-
-      // Click handler — use the current layer
-      keyEl.addEventListener('click', () => {
-        const active = currentMask() <= 5 ? exactLayerValue(slots) : layerValue(slots);
-        const ch = active.value;
-        if (ch) {
-          insertChar(ch);
-          // flash
-          keyEl.classList.add('pressed');
-          setTimeout(() => keyEl.classList.remove('pressed'), 120);
-          // reset locked mods after use (one-shot)
-          if (MOD_ORDER.some(mod => lockedMods[mod])) {
-            lockedMods = { shift: false, alt: false, ctrl: false };
-            updateLayerUI();
-            buildKeyboard();
-          }
-        }
-      });
 
       rowDiv.appendChild(keyEl);
     });
