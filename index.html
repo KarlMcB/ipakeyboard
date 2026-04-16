@@ -709,7 +709,9 @@ function buildKeyboard() {
       grid.className = 'key-grid';
 
       const activeMask = currentMask();
-      const activeResolved = activeMask <= 5 ? exactLayerValue(slots, activeMask) : layerValue(slots, activeMask);
+      const activeResolved = (physMods.ctrl && physMods.alt)
+        ? { value: null, mask: -1 }
+        : activeMask <= 5 ? exactLayerValue(slots, activeMask) : layerValue(slots, activeMask);
 
       // Layout:
       // [ shift+control, shift, shift+option ]
@@ -830,13 +832,17 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Backspace') { setVirtualKeyPressed('__backspace__', true); doBackspace(); e.preventDefault(); return; }
   if (e.key === 'Escape') { clearAll(); return; }
 
+  // Control + Option together = no action
+  if (physMods.ctrl && physMods.alt) return;
+
   // Map physical key to our key id
   const physKey = getPhysKey(e);
   const slots = MAP[physKey];
   if (!slots) return;
   setVirtualKeyPressed(physKey, true);
 
-  const active = currentMask() <= 5 ? exactLayerValue(slots) : layerValue(slots);
+  const activeMask = currentMask();
+  const active = activeMask <= 5 ? exactLayerValue(slots) : layerValue(slots);
   const ch = active.value;
   if (ch) { e.preventDefault(); insertChar(ch); }
 });
