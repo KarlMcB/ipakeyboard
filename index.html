@@ -920,6 +920,7 @@ function displayKeyLabel(key) {
 //  PHYSICAL KEYBOARD HANDLER
 // ─────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  if (e.metaKey) return;  // let Command/Meta shortcuts pass through untouched
   if (e.key === 'Shift') { physMods.shift = true; updateLayerUI(); buildKeyboard(); return; }
   if (e.key === 'Alt') { physMods.alt = true; updateLayerUI(); buildKeyboard(); e.preventDefault(); return; }
   if (e.key === 'Control') { physMods.ctrl = true; updateLayerUI(); buildKeyboard(); return; }
@@ -938,6 +939,7 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('keyup', e => {
+  if (e.metaKey) return;  // let Command/Meta shortcuts pass through untouched
   if (e.key === 'Shift') { physMods.shift = false; updateLayerUI(); buildKeyboard(); }
   if (e.key === 'Alt') { physMods.alt = false; updateLayerUI(); buildKeyboard(); }
   if (e.key === 'Control') { physMods.ctrl = false; updateLayerUI(); buildKeyboard(); }
