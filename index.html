@@ -142,62 +142,6 @@ header p {
   color: var(--accent);
 }
 
-/* LAYER INDICATOR */
-.layer-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.7rem;
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.layer-label {
-  font-style: italic;
-}
-
-.layer-badge {
-  background: var(--accent);
-  color: #fff;
-  padding: 0.15rem 0.6rem;
-  border-radius: 3px;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-}
-
-/* MODIFIER BUTTONS */
-.mod-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.9rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.mod-btn {
-  font-family: 'EB Garamond', serif;
-  font-size: 0.85rem;
-  padding: 0.35rem 1rem;
-  border-radius: 4px;
-  border: 1.5px solid var(--border);
-  background: var(--paper);
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0.04em;
-  user-select: none;
-}
-.mod-btn:hover { border-color: var(--accent); color: var(--accent); }
-.mod-btn.active { background: var(--modifier-on); color: #fff; border-color: var(--modifier-on); }
-
-.mod-hint {
-  font-size: 0.78rem;
-  color: var(--muted);
-  font-style: italic;
-  margin-left: 0.3rem;
-}
-
 /* KEYBOARD */
 .keyboard {
   user-select: none;
@@ -448,20 +392,6 @@ header p {
   <button class="btn btn-bs" onclick="doBackspace()">⌫ Delete</button>
 </div>
 
-<div class="layer-bar">
-  <span class="layer-label">Active layer:</span>
-  <span class="layer-badge" id="layerBadge">Base</span>
-  <span style="margin-left:0.5rem; font-size:0.78rem; color:var(--muted); font-style:italic;">
-    — physical Shift / Option / Control keys also work
-  </span>
-</div>
-
-<div class="mod-row">
-  <button class="mod-btn" id="mod-shift" onclick="toggleMod('shift')">⇧ Shift</button>
-  <button class="mod-btn" id="mod-alt" onclick="toggleMod('alt')">⌥ Option</button>
-  <button class="mod-btn" id="mod-ctrl" onclick="toggleMod('ctrl')">⌃ Control</button>
-  <span class="mod-hint">Click to lock modifiers, or hold the physical keys</span>
-</div>
 
 <div class="keyboard" id="keyboard"></div>
 
@@ -625,15 +555,13 @@ const MOD_LABELS = {
   alt: 'Option',
   ctrl: 'Control',
 };
-const MOD_SHORT = { shift: 'S', alt: 'O', ctrl: 'C' };
 
-let lockedMods = { shift: false, alt: false, ctrl: false };
 let physMods = { shift: false, alt: false, ctrl: false };
 const pressedVirtKeys = new Set();
 
 function currentMask() {
   return MOD_ORDER.reduce((mask, mod) => {
-    if (lockedMods[mod] || physMods[mod]) return mask | MOD_BITS[mod];
+    if (physMods[mod]) return mask | MOD_BITS[mod];
     return mask;
   }, 0);
 }
@@ -643,10 +571,6 @@ function layerLabel(mask = currentMask()) {
   return active.length ? active.join(' + ') : 'Base';
 }
 
-function layerShort(mask) {
-  const active = MOD_ORDER.filter(mod => mask & MOD_BITS[mod]).map(mod => MOD_SHORT[mod]);
-  return active.length ? active.join('+') : 'Base';
-}
 
 function normalizeSlots(slots) {
   const normalized = new Array(8).fill(null);
@@ -705,13 +629,6 @@ function exactLayerValue(slots, mask = currentMask()) {
   return { value: normalized[mask] ?? null, mask };
 }
 
-function updateLayerUI() {
-  document.getElementById('layerBadge').textContent = layerLabel();
-  MOD_ORDER.forEach(mod => {
-    document.getElementById('mod-' + mod).classList.toggle('active', lockedMods[mod]);
-  });
-}
-
 // ─────────────────────────────────────────────────────────────────
 //  OUTPUT
 // ─────────────────────────────────────────────────────────────────
@@ -766,14 +683,6 @@ function copyText() {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-//  MODIFIERS
-// ─────────────────────────────────────────────────────────────────
-function toggleMod(mod) {
-  lockedMods[mod] = !lockedMods[mod];
-  updateLayerUI();
-  buildKeyboard();
-}
 
 // ─────────────────────────────────────────────────────────────────
 //  BUILD KEYBOARD
@@ -833,12 +742,6 @@ function buildKeyboard() {
             // flash the key
             keyEl.classList.add('pressed');
             setTimeout(() => keyEl.classList.remove('pressed'), 120);
-            // reset locked mods after use (one-shot)
-            if (MOD_ORDER.some(mod => lockedMods[mod])) {
-              lockedMods = { shift: false, alt: false, ctrl: false };
-              updateLayerUI();
-              buildKeyboard();
-            }
           });
         }
         grid.appendChild(cell);
@@ -921,9 +824,9 @@ function displayKeyLabel(key) {
 // ─────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.metaKey) return;  // let Command/Meta shortcuts pass through untouched
-  if (e.key === 'Shift') { physMods.shift = true; updateLayerUI(); buildKeyboard(); return; }
-  if (e.key === 'Alt') { physMods.alt = true; updateLayerUI(); buildKeyboard(); e.preventDefault(); return; }
-  if (e.key === 'Control') { physMods.ctrl = true; updateLayerUI(); buildKeyboard(); return; }
+  if (e.key === 'Shift') { physMods.shift = true; buildKeyboard(); return; }
+  if (e.key === 'Alt') { physMods.alt = true; buildKeyboard(); e.preventDefault(); return; }
+  if (e.key === 'Control') { physMods.ctrl = true; buildKeyboard(); return; }
   if (e.key === 'Backspace') { setVirtualKeyPressed('__backspace__', true); doBackspace(); e.preventDefault(); return; }
   if (e.key === 'Escape') { clearAll(); return; }
 
@@ -940,9 +843,9 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('keyup', e => {
   if (e.metaKey) return;  // let Command/Meta shortcuts pass through untouched
-  if (e.key === 'Shift') { physMods.shift = false; updateLayerUI(); buildKeyboard(); }
-  if (e.key === 'Alt') { physMods.alt = false; updateLayerUI(); buildKeyboard(); }
-  if (e.key === 'Control') { physMods.ctrl = false; updateLayerUI(); buildKeyboard(); }
+  if (e.key === 'Shift') { physMods.shift = false; buildKeyboard(); }
+  if (e.key === 'Alt') { physMods.alt = false; buildKeyboard(); }
+  if (e.key === 'Control') { physMods.ctrl = false; buildKeyboard(); }
   if (e.key === 'Backspace') { setVirtualKeyPressed('__backspace__', false); return; }
   setVirtualKeyPressed(getPhysKey(e), false);
 });
@@ -1037,7 +940,6 @@ function buildRefTable() {
 //  INIT
 // ─────────────────────────────────────────────────────────────────
 buildKeyboard();
-updateLayerUI();
 </script>
 </body>
 </html>
