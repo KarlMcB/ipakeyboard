@@ -112,6 +112,9 @@ header p {
 .btn-clear:hover { border-color: var(--muted); color: var(--ink); }
 .btn-bs { background: transparent; color: var(--muted); margin-left: auto; }
 .btn-bs:hover { border-color: var(--accent); color: var(--accent); }
+.btn-speak { background: transparent; color: var(--muted); }
+.btn-speak:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-speak.speaking { color: var(--accent2); border-color: var(--accent2); }
 .last-char-name {
   display: flex;
   align-items: center;
@@ -388,6 +391,7 @@ header p {
 <div class="output-controls">
   <button class="btn btn-copy" id="copyBtn" onclick="copyText()">Copy to Clipboard</button>
   <button class="btn btn-clear" onclick="clearAll()">Clear</button>
+  <button class="btn btn-speak" id="speakBtn" onclick="speakText()">▶ Speak</button>
   <span class="last-char-name" id="lastCharName"></span>
   <button class="btn btn-bs" onclick="doBackspace()">⌫ Delete</button>
 </div>
@@ -673,6 +677,21 @@ function doBackspace() {
 }
 
 function clearAll() { text = ''; lastChar = ''; renderOutput(); updateLastCharName(); }
+
+function speakText() {
+  if (!text) return;
+  const btn = document.getElementById('speakBtn');
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    btn.textContent = '▶ Speak';
+    btn.classList.remove('speaking');
+    return;
+  }
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.onstart = () => { btn.textContent = '■ Stop'; btn.classList.add('speaking'); };
+  utt.onend = utt.onerror = () => { btn.textContent = '▶ Speak'; btn.classList.remove('speaking'); };
+  speechSynthesis.speak(utt);
+}
 
 function copyText() {
   if (!text) return;
